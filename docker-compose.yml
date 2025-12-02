@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # Streamlit UI Service
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stock-recommendation-ui
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./models:/app/models
+    networks:
+      - stock-network
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - redis
+
+  # MongoDB for data storage
+  mongodb:
+    image: mongo:7.0
+    container_name: stock-recommendation-db
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin123
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - stock-network
+    restart: unless-stopped
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: stock-recommendation-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - stock-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # FastAPI Service (for API endpoints)
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: stock-recommendation-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./models:/app/models
+    networks:
+      - stock-network
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - redis
+
+networks:
+  stock-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  redis_data:
