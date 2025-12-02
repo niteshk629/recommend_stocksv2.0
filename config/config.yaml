@@ -1,0 +1,72 @@
+data_sources:
+  yahoo_finance:
+    enabled: true
+    interval: "1d"
+    period: "1y"
+  
+  groww:
+    enabled: true
+    base_url: "https://groww.in/v1/api"
+    timeout: 30
+  
+  zerodha:
+    enabled: true
+    base_url: "https://api.kite.trade"
+    timeout: 30
+
+etl:
+  batch_size: 100
+  max_workers: 4
+  cache_ttl: 3600
+
+feature_engineering:
+  technical_indicators:
+    - SMA
+    - EMA
+    - RSI
+    - MACD
+    - Bollinger_Bands
+    - ATR
+    - Volume
+  
+  sentiment_sources:
+    - twitter
+    - news
+    - reddit
+
+ml_models:
+  prophet:
+    changepoint_prior_scale: 0.05
+    seasonality_mode: "multiplicative"
+    daily_seasonality: true
+    weekly_seasonality: true
+    yearly_seasonality: true
+  
+  xgboost:
+    max_depth: 6
+    learning_rate: 0.1
+    n_estimators: 100
+    objective: "reg:squarederror"
+  
+  finbert:
+    model_name: "ProsusAI/finbert"
+    max_length: 512
+
+scoring:
+  weights:
+    technical: 0.3
+    fundamental: 0.2
+    sentiment: 0.2
+    ml_prediction: 0.3
+  
+  thresholds:
+    strong_buy: 80
+    buy: 60
+    hold: 40
+    sell: 20
+
+streamlit:
+  page_title: "Stock Recommendation System"
+  page_icon: "📈"
+  layout: "wide"
+  sidebar_state: "expanded"
